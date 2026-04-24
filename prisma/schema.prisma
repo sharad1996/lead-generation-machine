@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id           String        @id @default(cuid()) @map("_id")
+  name         String
+  phone        String?
+  email        String?
+  website      String?
+  mapsLink     String?
+  address      String?
+  location     String?
+  rating       Float?
+  source       String        @default("google_maps")
+  status       String        @default("new")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  outreachLogs OutreachLog[]
+
+  @@index([status])
+  @@index([location])
+  @@index([createdAt])
+}
+
+model Campaign {
+  id              String        @id @default(cuid()) @map("_id")
+  name            String
+  messageTemplate String
+  channel         String
+  createdAt       DateTime      @default(now())
+  outreachLogs    OutreachLog[]
+}
+
+model OutreachLog {
+  id         String   @id @default(cuid()) @map("_id")
+  leadId     String
+  campaignId String
+  status     String
+  response   String?
+  sentAt     DateTime @default(now())
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([campaignId])
+}

@@ -1,0 +1,56 @@
+# Prisma requires MongoDB as a replica set. This stack runs ONE node named rs0.
+#
+# Requires Docker Desktop (or OrbStack, Rancher Desktop, etc.) to be RUNNING.
+# If you see "failed to connect to the docker API", start Docker or use Atlas / native Mongo instead
+# (npm run db:mongo:native-help).
+#
+# Published on host port 27018 on purpose so it does NOT clash with a standalone
+# MongoDB often bound to 27017 (Homebrew, etc.). If 127.0.0.1:27017 is standalone,
+# Prisma will error: replicaSet "rs0" does not match actual name <none>.
+#
+# Start:   npm run db:mongo:up
+# Init:   npm run db:mongo:init   (safe to re-run)
+# Status:  npm run db:mongo:status
+# Stop:    npm run db:mongo:down
+# Reset:   npm run db:mongo:down && docker volume rm lead-generator-system_leadmachine_mongo_data
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: leadmachine-mongo
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - leadmachine_mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 25s
+
+  mongo-init:
+    image: mongo:7
+    network_mode: service:mongo
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: ["/bin/bash", "-lc"]
+    command:
+      - |
+        set -e
+        mongosh --quiet --eval "db.adminCommand('ping')"
+        mongosh --quiet --eval 'try { rs.status() } catch (e) { rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "127.0.0.1:27017" }] }) }'
+        echo "Waiting for PRIMARY (up to 45s)..."
+        for i in $$(seq 1 45); do
+          S=$$(mongosh --quiet --eval 'try{rs.status().members[0].stateStr}catch(e){""}' 2>/dev/null || true)
+          if [ "$$S" = "PRIMARY" ]; then echo "Replica set is PRIMARY."; break; fi
+          sleep 1
+        done
+        mongosh --quiet --eval 'rs.status()'
+
+volumes:
+  leadmachine_mongo_data:

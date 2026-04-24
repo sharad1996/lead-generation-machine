@@ -6,21 +6,44 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:mongo:up": "docker compose -f docker-compose.mongo.yml up -d",
+    "db:mongo:down": "docker compose -f docker-compose.mongo.yml down",
+    "db:mongo:init": "sh scripts/mongo-init.sh",
+    "db:mongo:status": "sh scripts/mongo-status.sh",
+    "db:mongo:native-help": "sh scripts/mongo-native-mac.sh",
+    "db:mongo:native-init": "sh scripts/mongo-rs-init-native.sh",
+    "worker": "tsx scripts/worker.ts",
+    "browsers:install": "npx puppeteer browsers install chrome-headless-shell",
+    "postinstall": "npx puppeteer browsers install chrome-headless-shell"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bullmq": "^5.76.1",
+    "dotenv": "^17.4.2",
+    "googleapis": "^171.4.0",
+    "ioredis": "^5.10.1",
+    "next": "14.2.35",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.5",
+    "puppeteer": "^24.42.0",
     "react": "^18",
-    "react-dom": "^18",
-    "next": "14.2.35"
+    "react-dom": "^18"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
     "eslint": "^8",
-    "eslint-config-next": "14.2.35"
+    "eslint-config-next": "14.2.35",
+    "postcss": "^8",
+    "prisma": "^5.22.0",
+    "tailwindcss": "^3.4.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
   }
 }
