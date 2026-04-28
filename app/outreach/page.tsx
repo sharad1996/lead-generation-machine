@@ -15,9 +15,16 @@ export default function OutreachPage() {
   const [log, setLog] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/leads?take=200")
-      .then((r) => r.json())
-      .then((d) => setLeads(d.leads ?? []));
+    fetch("/api/leads?take=200&noWebsite=1")
+      .then(async (r) => {
+        const d = (await r.json()) as { ok?: boolean; leads?: Lead[] };
+        if (d.ok === false) {
+          setLeads([]);
+          return;
+        }
+        setLeads(d.leads ?? []);
+      })
+      .catch(() => setLeads([]));
   }, []);
 
   const selectedIds = Object.entries(selected)
@@ -52,8 +59,9 @@ export default function OutreachPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Outreach</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Compose a template and select leads. Use <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-900">{"{{businessName}}"}</code>{" "}
-          and <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-900">{"{{location}}"}</code> placeholders.
+          List shows leads <strong>without a real website</strong> (same filter as your pitch list). Use{" "}
+          <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-900">{"{{businessName}}"}</code> and{" "}
+          <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-900">{"{{location}}"}</code> in templates.
         </p>
       </div>
 

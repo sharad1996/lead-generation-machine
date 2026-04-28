@@ -35,8 +35,9 @@ export function startCronJobs(): void {
       "pharma distributor",
     ]);
     const locations = parseJsonArray(process.env.SCRAPER_CRON_LOCATIONS, ["Texas", "California"]);
+    const category = process.env.SCRAPER_CRON_CATEGORY?.trim() || undefined;
 
-    logger.info("Cron scrape tick", { keywords, locations });
+    logger.info("Cron scrape tick", { keywords, locations, category });
 
     try {
       if (process.env.REDIS_URL) {
@@ -44,6 +45,7 @@ export function startCronJobs(): void {
           keywords,
           locations,
           maxPlacesPerQuery: Number(process.env.SCRAPER_MAX_PLACES || "15"),
+          category,
         });
       } else {
         await runScrapePipeline({
@@ -51,6 +53,7 @@ export function startCronJobs(): void {
           locations,
           maxPlacesPerQuery: Number(process.env.SCRAPER_MAX_PLACES || "15"),
           enrichAfterStore: process.env.SCRAPER_CRON_ENRICH === "1",
+          category,
         });
       }
     } catch (e) {

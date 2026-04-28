@@ -27,6 +27,8 @@ export async function POST(req: Request) {
       concurrency?: number;
       enrichAfterStore?: boolean;
       bypassWebsiteFilter?: boolean;
+      /** Niche / campaign label stored on each inserted lead. */
+      category?: string | null;
       async?: boolean;
     };
 
@@ -41,6 +43,8 @@ export async function POST(req: Request) {
       concurrency: body.concurrency,
       enrichAfterStore: body.enrichAfterStore,
       bypassWebsiteFilter: body.bypassWebsiteFilter,
+      category:
+        typeof body.category === "string" && body.category.trim() ? body.category.trim() : undefined,
     };
 
     const wantsQueue = body.async !== false && process.env.REDIS_URL;

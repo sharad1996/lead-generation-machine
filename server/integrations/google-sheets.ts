@@ -39,6 +39,7 @@ export async function appendLeadToSheet(row: Record<string, string | number | nu
       row.rating ?? "",
       row.status ?? "",
       row.mapsLink ?? "",
+      row.category ?? "",
     ],
   ];
 

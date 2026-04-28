@@ -13,6 +13,7 @@ export function SiteNav() {
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <Link href="/" className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           Lead Machine
+          <span className="ml-2 hidden font-normal text-zinc-500 sm:inline">Maps → no-site prospects</span>
         </Link>
         <nav className="flex flex-wrap items-center gap-3 text-sm text-zinc-600 dark:text-zinc-300">
           {links.map((l) => (

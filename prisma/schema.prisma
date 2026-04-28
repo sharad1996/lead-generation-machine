@@ -10,6 +10,8 @@ datasource db {
 model Lead {
   id           String        @id @default(cuid()) @map("_id")
   name         String
+  /// Niche / campaign label from the scraper (preset name or custom).
+  category     String?
   phone        String?
   email        String?
   website      String?

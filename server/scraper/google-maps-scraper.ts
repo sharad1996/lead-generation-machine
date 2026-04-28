@@ -1,6 +1,8 @@
 import type { Browser, Page } from "puppeteer";
 import { logger } from "@/lib/logger";
 import type { RawLead } from "@/server/types/lead";
+import { NO_REAL_WEBSITE_URL_SNIPPETS } from "@/server/filter/no-real-website";
+import { resolveLeadNameFromMaps } from "@/server/scraper/resolve-lead-name";
 import {
   dismissConsentAndInterstitials,
   harvestPlaceLinksFromSearchPage,
@@ -51,7 +53,23 @@ async function scrapePlacePage(page: Page, placeUrl: string, contextLocation: st
   await dismissConsentAndInterstitials(page);
   await sleep(1200);
 
-  const data = await page.evaluate(() => {
+  const snippetList = [...NO_REAL_WEBSITE_URL_SNIPPETS];
+
+  const data = await page.evaluate((snippets: string[]) => {
+    const snippetsLower = snippets.map((s) => s.toLowerCase());
+    const isBlockedHref = (href: string): boolean => {
+      const h = href.toLowerCase();
+      if (h.includes("google.com/maps") || h.includes("maps.google")) return true;
+      if (snippetsLower.some((s) => h.includes(s))) return true;
+      try {
+        const u = new URL(href);
+        const host = u.hostname.toLowerCase();
+        if (host === "google.com" || host.endsWith(".google.com")) return true;
+      } catch {
+        return true;
+      }
+      return false;
+    };
     const pickText = (selectors: string[]): string | null => {
       for (const sel of selectors) {
         const el = document.querySelector(sel);
@@ -67,8 +85,11 @@ async function scrapePlacePage(page: Page, placeUrl: string, contextLocation: st
         "h1.DUwDvf",
         "h1.qrShPb",
         "h1.fontHeadlineLarge",
+        "h1.fontHeadlineMedium",
         '[data-attrid="title"]',
         "h1.fontHeadlineSmall",
+        '[role="main"] h1',
+        "h1[class*='Headline']",
         "h1",
       ]) ??
       ogTitle ??
@@ -105,17 +126,17 @@ async function scrapePlacePage(page: Page, placeUrl: string, contextLocation: st
     }
 
     let website: string | null = null;
-    const webAnchors = Array.from(
-      document.querySelectorAll<HTMLAnchorElement>(
-        'a[data-item-id="authority"], a[href^="http"][data-tooltip*="ebsite"], a[href^="http"]',
-      ),
-    );
-    for (const a of webAnchors) {
-      const href = a.href;
-      if (!href) continue;
-      if (href.includes("google.com/maps")) continue;
-      if (href.startsWith("http") && !href.includes("google.com")) {
-        website = href.split("?")[0];
+    const authority = document.querySelector<HTMLAnchorElement>('a[data-item-id="authority"]');
+    if (authority?.href) {
+      const clean = authority.href.split("?")[0];
+      if (!isBlockedHref(clean)) website = clean;
+    }
+    if (!website) {
+      const anchors = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href^="http"]'));
+      for (const a of anchors) {
+        const href = a.href.split("?")[0];
+        if (!href || isBlockedHref(href)) continue;
+        website = href;
         break;
       }
     }
@@ -133,15 +154,18 @@ async function scrapePlacePage(page: Page, placeUrl: string, contextLocation: st
     }
 
     return { title, rating, phone, website, address };
-  });
+  }, snippetList);
 
-  if (!data.title) {
-    logger.warn("Place page missing title", { placeUrl });
-    return null;
+  const name = resolveLeadNameFromMaps(data.title, placeUrl);
+  if (!data.title?.trim()) {
+    logger.info("Place page title weak or empty; resolved name from URL or fallback", {
+      placeUrl,
+      resolvedName: name,
+    });
   }
 
   return {
-    name: data.title,
+    name,
     mapsLink: placeUrl,
     phone: data.phone,
     website: data.website,

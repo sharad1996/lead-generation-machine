@@ -5,16 +5,19 @@ import { useEffect, useMemo, useState } from "react";
 type Lead = {
   id: string;
   name: string;
+  category?: string | null;
   phone: string | null;
   email: string | null;
   location: string | null;
   website: string | null;
+  mapsLink?: string | null;
   status: string;
 };
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [noWebsite, setNoWebsite] = useState(false);
+  /** Default on: table matches “prospects without a real site” outreach list. */
+  const [noWebsite, setNoWebsite] = useState(true);
   const [location, setLocation] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -49,7 +52,10 @@ export default function LeadsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Filter and review ingested records.</p>
+        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          Website-outreach view: prioritize businesses with <strong>no real website</strong> (or only a Maps URL). Use
+          filters to narrow by location or status.
+        </p>
       </div>
 
       <div className="flex flex-wrap items-end gap-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -96,6 +102,7 @@ export default function LeadsPage() {
             <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950">
               <tr>
                 <th className="px-3 py-2">Name</th>
+                <th className="px-3 py-2">Category</th>
                 <th className="px-3 py-2">Phone</th>
                 <th className="px-3 py-2">Email</th>
                 <th className="px-3 py-2">Location</th>
@@ -106,7 +113,17 @@ export default function LeadsPage() {
             <tbody>
               {leads.map((l) => (
                 <tr key={l.id} className="border-t border-zinc-100 dark:border-zinc-800">
-                  <td className="px-3 py-2 font-medium">{l.name}</td>
+                  <td className="px-3 py-2 font-medium">
+                    {l.name?.trim() ? l.name : "—"}
+                    {!l.name?.trim() && l.mapsLink && (
+                      <span className="mt-0.5 block max-w-xs truncate text-xs font-normal text-zinc-500">
+                        {l.mapsLink}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 max-w-[14rem] text-zinc-700 dark:text-zinc-300">
+                    {l.category?.trim() ? l.category : "—"}
+                  </td>
                   <td className="px-3 py-2">{l.phone ?? "—"}</td>
                   <td className="px-3 py-2">{l.email ?? "—"}</td>
                   <td className="px-3 py-2">{l.location ?? "—"}</td>
@@ -116,7 +133,7 @@ export default function LeadsPage() {
               ))}
               {!leads.length && (
                 <tr>
-                  <td colSpan={6} className="px-3 py-6 text-center text-zinc-500">
+                  <td colSpan={7} className="px-3 py-6 text-center text-zinc-500">
                     No leads yet. Run the scraper to populate data.
                   </td>
                 </tr>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DATABASE_UNAVAILABLE_HINT, isDatabaseUnreachable } from "@/lib/db-connection-hint";
+import { prismaWhereLeadNoRealWebsite } from "@/server/filter/no-real-website";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,11 +10,7 @@ export async function GET() {
   try {
     const [total, noWebsite, contacted, converted] = await Promise.all([
       prisma.lead.count(),
-      prisma.lead.count({
-        where: {
-          OR: [{ website: null }, { website: { contains: "maps.google", mode: "insensitive" } }],
-        },
-      }),
+      prisma.lead.count({ where: prismaWhereLeadNoRealWebsite() }),
       prisma.lead.count({ where: { status: "contacted" } }),
       prisma.lead.count({ where: { status: "converted" } }),
     ]);

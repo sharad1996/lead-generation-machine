@@ -44,7 +44,7 @@ export default function DashboardPage() {
 
   const cards = [
     { label: "Total leads", value: stats.totalLeads },
-    { label: "No / maps-only website", value: stats.filteredLeadsNoWebsite },
+    { label: "No real website (outreach list)", value: stats.filteredLeadsNoWebsite },
     { label: "Contacted", value: stats.contacted },
     { label: "Converted", value: stats.converted },
   ];
@@ -54,7 +54,8 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Pipeline snapshot: scrape → filter → enrich → outreach.
+          Track prospects <strong>without a proper website</strong> (your main pitch list), then enrich and reach out
+          before competitors who only rely on Google Maps.
         </p>
       </div>
 

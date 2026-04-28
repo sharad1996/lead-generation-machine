@@ -11,6 +11,7 @@ export type ScrapeJobPayload = {
   concurrency?: number;
   enrichAfterStore?: boolean;
   bypassWebsiteFilter?: boolean;
+  category?: string | null;
 };
 
 let scrapeQueue: Queue<ScrapeJobPayload> | null = null;

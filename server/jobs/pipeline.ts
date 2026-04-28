@@ -8,6 +8,7 @@ import {
   type ScrapeDiagnostics,
   type ScrapeOptions,
 } from "@/server/scraper/google-maps-scraper";
+import { resolveLeadNameFromMaps } from "@/server/scraper/resolve-lead-name";
 import { enrichLead } from "@/server/enrichment/enrich-lead";
 
 export type ScrapePipelineInput = ScrapeOptions & {
@@ -15,6 +16,8 @@ export type ScrapePipelineInput = ScrapeOptions & {
   enrichAfterStore?: boolean;
   /** When true, store every scraped lead (ignore no-website filter). */
   bypassWebsiteFilter?: boolean;
+  /** Shown on leads (niche preset label or custom scrape label). */
+  category?: string | null;
 };
 
 export type ScrapePipelineResult = {
@@ -69,7 +72,8 @@ export async function runScrapePipeline(input: ScrapePipelineInput): Promise<Scr
 
     const created = await prisma.lead.create({
       data: {
-        name: lead.name,
+        name: resolveLeadNameFromMaps(lead.name, lead.mapsLink),
+        category: input.category?.trim() ? input.category.trim() : undefined,
         phone: lead.phone ?? undefined,
         website: lead.website ?? undefined,
         mapsLink: lead.mapsLink,
@@ -84,6 +88,7 @@ export async function runScrapePipeline(input: ScrapePipelineInput): Promise<Scr
 
     await appendLeadToSheet({
       name: created.name,
+      category: created.category,
       phone: created.phone,
       email: created.email,
       website: created.website,
