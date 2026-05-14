@@ -62,11 +62,19 @@ export function filterRawLeads(leads: RawLead[]): RawLead[] {
   return leads.filter((l) => filterLead({ website: l.website }));
 }
 
-/** Prisma filter: leads that count as no standalone site (matches {@link filterLead}). */
+/**
+ * Prisma filter: leads that count as no standalone site (matches {@link filterLead}).
+ *
+ * MongoDB note: a record stored without a `website` value (passed as `undefined`
+ * during create) has the field MISSING, not `null`. Prisma+Mongo's `{ website: null }`
+ * matcher does NOT match missing fields — `{ website: { isSet: false } }` does.
+ * We include both so old and new rows are both caught.
+ */
 export function prismaWhereLeadNoRealWebsite(): Prisma.LeadWhereInput {
   return {
     OR: [
       { website: null },
+      { website: { isSet: false } },
       { website: { equals: "" } },
       ...NO_REAL_WEBSITE_URL_SNIPPETS.map((snippet) => ({
         website: { contains: snippet, mode: Prisma.QueryMode.insensitive },
